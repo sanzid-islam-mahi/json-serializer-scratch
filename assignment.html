@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own JSON Serializer — Assignment</title>
+<style>
+  :root {
+    --ink: #1c1c1c;
+    --muted: #5a5a5a;
+    --rule: #dcdcdc;
+    --accent: #2b5797;
+    --panel: #f7f7f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    color: var(--ink);
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+    line-height: 1.65;
+    font-size: 17px;
+  }
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .kicker {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .intro {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 40px;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+  h3 {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 5px; }
+  code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--panel);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    background: var(--panel);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    overflow-x: auto;
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+  .callout {
+    background: var(--panel);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    margin: 0 0 18px;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 0.93rem;
+  }
+  .callout strong { color: var(--accent); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  th { background: var(--panel); font-weight: 600; }
+  td.weight, th.weight { text-align: right; width: 90px; }
+  tfoot td {
+    font-weight: 700;
+    border-top: 2px solid var(--ink);
+    border-bottom: none;
+  }
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 40px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="kicker">Assignment</div>
+<h1>Build Your Own JSON Serializer</h1>
+<p class="intro">
+  Build a JSON serializer and deserializer from scratch in C# — no libraries doing the real work for you. By the end, you'll understand exactly what tools like <code>System.Text.Json</code> are doing internally, because you'll have built a working version yourself.
+</p>
+
+<h2>Overview</h2>
+<p>
+  You'll build a library that turns C# objects into JSON text, and JSON text back into C# objects. You may not use <code>System.Text.Json</code>, Newtonsoft.Json, or any other JSON library for the core work.
+</p>
+<p>
+  Use reflection to inspect an object's properties for serialization, and to populate them during deserialization. Don't hand-write per-class conversion code — the library should work on any class through reflection alone.
+</p>
+
+<div class="callout">
+  <strong>Not allowed:</strong> System.Text.Json, Newtonsoft.Json/Json.NET, or any third-party JSON library.<br>
+  <strong>Allowed:</strong> reflection, generics, collections, StringBuilder, regular expressions — anything else in the base class library.
+</div>
+
+<h2>1. Basic Serialization</h2>
+<p>Serialize primitive values: <code>string</code>, <code>int</code>, <code>long</code>, <code>float</code>, <code>double</code>, <code>decimal</code>, <code>bool</code>, and <code>null</code>.</p>
+
+<h2>2. Object Serialization</h2>
+<p>Given a plain class:</p>
+<pre>public class User
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public bool IsActive { get; set; }
+}</pre>
+<p>Serializing an instance should produce:</p>
+<pre>{
+  "Id": 1,
+  "Name": "John",
+  "IsActive": true
+}</pre>
+<p>Discover the properties dynamically — don't hand-write serialization code per class.</p>
+
+<h2>3. Nested Objects</h2>
+<p>Objects containing other objects should nest correctly in the output, at any depth.</p>
+
+<h2>4. Collections</h2>
+<p>Support arrays, <code>List&lt;T&gt;</code>, and <code>IEnumerable&lt;T&gt;</code>. Collections can hold primitives, objects, or other collections.</p>
+
+<h2>5. Dictionaries</h2>
+<p>Support <code>Dictionary&lt;string, object&gt;</code>, serialized as a JSON object.</p>
+
+<h2>6. Deserialization</h2>
+<p>Convert JSON back into a typed object:</p>
+<pre>var user = JsonSerializer.Deserialize&lt;User&gt;(json);</pre>
+
+<h2>7. Reading JSON</h2>
+<p>
+  Your code needs to turn JSON text — objects, arrays, strings, numbers, booleans, null — back into C# values. Malformed JSON should raise a clear error, never silently produce a "valid-looking" object.
+</p>
+
+<h2>8. Special Types</h2>
+<p>Support <code>DateTime</code>, <code>Guid</code>, <code>enum</code>, and nullable value types (<code>int?</code>). There's no single correct representation for most of these — make a reasonable call and document it.</p>
+
+<h2>9. Error Handling</h2>
+<p>Handle bad input gracefully: invalid JSON, unexpected tokens, malformed numbers, type mismatches on deserialization. Exceptions should say what went wrong, not just "something failed."</p>
+
+<h2>10. Circular References</h2>
+<p>An object can end up referencing itself, directly or through a chain:</p>
+<pre>person.Friend = person;</pre>
+<p>Your serializer must not infinite-loop on this. Detect it, handle it reasonably, and document your choice.</p>
+
+<hr class="section-divider">
+
+<h2>Performance</h2>
+<p>
+  Serialize the same type thousands of times in a loop and see where the time goes — reflection lookups are the usual culprit. Optimize what's actually expensive (metadata caching is a common fix) and back it up with a small before/after benchmark.
+</p>
+
+<h2>Deliverables</h2>
+<ul>
+  <li>Source code for the library</li>
+  <li><code>README.md</code>: how to use it, supported types, design decisions, limitations, how circular references and errors are handled</li>
+  <li>A short performance report</li>
+</ul>
+
+<h2>Marking Criteria</h2>
+<table>
+  <thead>
+    <tr><th>Area</th><th class="weight">Weight</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Basic Serialization</td><td class="weight">15%</td></tr>
+    <tr><td>Deserialization &amp; Parsing</td><td class="weight">30%</td></tr>
+    <tr><td>Collections &amp; Nested Objects</td><td class="weight">20%</td></tr>
+    <tr><td>Error Handling</td><td class="weight">15%</td></tr>
+    <tr><td>Code Quality &amp; Design</td><td class="weight">15%</td></tr>
+    <tr><td>Performance Optimization</td><td class="weight">5%</td></tr>
+  </tbody>
+  <tfoot>
+    <tr><td>Total</td><td class="weight">100%</td></tr>
+  </tfoot>
+</table>
+
+</body>
+</html>
