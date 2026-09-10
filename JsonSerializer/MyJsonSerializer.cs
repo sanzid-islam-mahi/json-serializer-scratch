@@ -30,11 +30,11 @@ public class MyJsonSerializer : IJasonSerializer
         if (value is Guid g)
             return "\"" + g + "\"";
 
-        if (IsArrayType(type) || IsListType(type))
-            return SerializeArray(value);
-
         if (IsDictionaryType(type))
             return SerializeDictionary(value);
+
+        if (IsEnumerableType(type))
+            return SerializeArray(value);
 
         return SerializeObject(value);
     }
@@ -56,14 +56,9 @@ public class MyJsonSerializer : IJasonSerializer
         return type == typeof(bool);
     }
 
-    private static bool IsArrayType(Type type)
+    private static bool IsEnumerableType(Type type)
     {
-        return type.IsArray;
-    }
-
-    private static bool IsListType(Type type)
-    {
-        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
+        return typeof(IEnumerable).IsAssignableFrom(type);
     }
 
     private static bool IsDictionaryType(Type type)

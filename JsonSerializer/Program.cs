@@ -25,6 +25,9 @@ var person = new Person
 var jsonPerson = serializer.Serialize(person);
 Console.WriteLine(jsonPerson);
 
+IEnumerable<int> numbers = new HashSet<int> { 1, 2, 3 };
+Console.WriteLine(serializer.Serialize(numbers));
+
 class Person
 {
     public string Name { get; set; }
