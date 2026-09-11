@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using System.Text;
 
 namespace JsonSerializer;
@@ -111,7 +112,112 @@ public class MyJsonSerializer : IJasonSerializer
             return Enum.Parse(targetType, token.Trim('"'));
         }
 
+        if (token.StartsWith("{") && token.EndsWith("}"))
+        {
+            return DeserializeObject(token, targetType);
+        }
+
         throw new NotImplementedException("Deserialization for " + targetType.Name + " is not implemented yet.");
+    }
+
+    private object DeserializeObject(string token, Type targetType)
+    {
+        object instance = Activator.CreateInstance(targetType)!;
+        string inner = token.Substring(1, token.Length - 2).Trim();
+        if (inner.Length == 0)
+        {
+            return instance;
+        }
+
+        List<string> pairs = SplitJsonElements(inner);
+        for (int i = 0; i < pairs.Count; i++)
+        {
+            string pair = pairs[i].Trim();
+            if (pair.Length == 0)
+            {
+                continue;
+            }
+
+            int colonIndex = FindColonIndex(pair);
+            if (colonIndex == -1)
+            {
+                throw new FormatException("Invalid key-value pair in JSON object: " + pair);
+            }
+
+            string keyPart = pair.Substring(0, colonIndex).Trim();
+            string valuePart = pair.Substring(colonIndex + 1).Trim();
+            string propName = keyPart.Trim('"');
+
+            PropertyInfo? prop = targetType.GetProperty(propName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null && prop.CanWrite)
+            {
+                object? propValue = Deserialize(valuePart, prop.PropertyType);
+                prop.SetValue(instance, propValue);
+            }
+        }
+
+        return instance;
+    }
+
+    private static List<string> SplitJsonElements(string content)
+    {
+        List<string> elements = new List<string>();
+        StringBuilder current = new StringBuilder();
+        bool inQuotes = false;
+        int braceDepth = 0;
+        int bracketDepth = 0;
+
+        for (int i = 0; i < content.Length; i++)
+        {
+            char c = content[i];
+
+            if (c == '"' && (i == 0 || content[i - 1] != '\\'))
+            {
+                inQuotes = !inQuotes;
+            }
+
+            if (!inQuotes)
+            {
+                if (c == '{') braceDepth++;
+                else if (c == '}') braceDepth--;
+                else if (c == '[') bracketDepth++;
+                else if (c == ']') bracketDepth--;
+                else if (c == ',' && braceDepth == 0 && bracketDepth == 0)
+                {
+                    elements.Add(current.ToString());
+                    current.Clear();
+                    continue;
+                }
+            }
+
+            current.Append(c);
+        }
+
+        if (current.Length > 0)
+        {
+            elements.Add(current.ToString());
+        }
+
+        return elements;
+    }
+
+    private static int FindColonIndex(string pair)
+    {
+        bool inQuotes = false;
+        for (int i = 0; i < pair.Length; i++)
+        {
+            char c = pair[i];
+            if (c == '"' && (i == 0 || pair[i - 1] != '\\'))
+            {
+                inQuotes = !inQuotes;
+            }
+
+            if (c == ':' && !inQuotes)
+            {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static bool IsNumericType(Type type)
