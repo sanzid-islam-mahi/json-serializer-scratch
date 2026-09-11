@@ -5,7 +5,15 @@ namespace JsonSerializer;
 
 public class MyJsonSerializer : IJasonSerializer
 {
+    private HashSet<object> seenObjects = new HashSet<object>();
+
     public string Serialize(object? value)
+    {
+        seenObjects.Clear();
+        return SerializeInternal(value);
+    }
+
+    private string SerializeInternal(object? value)
     {
         if (value is null)
             return "null";
@@ -248,7 +256,7 @@ public class MyJsonSerializer : IJasonSerializer
         foreach (var item in items)
         {
             if (!first) sb.Append(", ");
-            sb.Append(Serialize(item));
+            sb.Append(SerializeInternal(item));
             first = false;
         }
         sb.Append(']');
@@ -265,7 +273,7 @@ public class MyJsonSerializer : IJasonSerializer
         {
             if (!first) sb.Append(", ");
             sb.Append("\"" + JsonString(entry.Key.ToString()!) + "\": ");
-            sb.Append(Serialize(entry.Value));
+            sb.Append(SerializeInternal(entry.Value));
             first = false;
         }
         sb.Append('}');
@@ -274,6 +282,13 @@ public class MyJsonSerializer : IJasonSerializer
 
     private string SerializeObject(object value)
     {
+        if (seenObjects.Contains(value))
+        {
+            throw new InvalidOperationException("Circular reference detected!");
+        }
+
+        seenObjects.Add(value);
+
         var sb = new StringBuilder();
         sb.Append('{');
         var properties = value.GetType().GetProperties();
@@ -284,10 +299,12 @@ public class MyJsonSerializer : IJasonSerializer
             var propValue = prop.GetValue(value);
             if (!first) sb.Append(", ");
             sb.Append("\"" + JsonString(prop.Name) + "\": ");
-            sb.Append(Serialize(propValue));
+            sb.Append(SerializeInternal(propValue));
             first = false;
         }
         sb.Append('}');
+
+        seenObjects.Remove(value);
         return sb.ToString();
     }
 }
