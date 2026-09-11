@@ -72,6 +72,21 @@ public class MyJsonSerializer : IJasonSerializer
             return null;
         }
 
+        if (token.StartsWith("\"") && !token.EndsWith("\""))
+        {
+            throw new FormatException("Unterminated string: " + token);
+        }
+
+        if (token.StartsWith("{") && !token.EndsWith("}"))
+        {
+            throw new FormatException("Missing closing brace '}' in JSON object: " + token);
+        }
+
+        if (token.StartsWith("[") && !token.EndsWith("]"))
+        {
+            throw new FormatException("Missing closing bracket ']' in JSON array: " + token);
+        }
+
         if (targetType == typeof(string))
         {
             return ParseJsonString(token);
@@ -79,22 +94,45 @@ public class MyJsonSerializer : IJasonSerializer
 
         if (targetType == typeof(int))
         {
-            return int.Parse(token);
+            try
+            {
+                return int.Parse(token);
+            }
+            catch (FormatException)
+            {
+                throw new FormatException("Cannot convert '" + token + "' to int.");
+            }
         }
 
         if (targetType == typeof(long))
         {
-            return long.Parse(token);
+            try
+            {
+                return long.Parse(token);
+            }
+            catch (FormatException)
+            {
+                throw new FormatException("Cannot convert '" + token + "' to long.");
+            }
         }
 
         if (targetType == typeof(double))
         {
-            return double.Parse(token);
+            try
+            {
+                return double.Parse(token);
+            }
+            catch (FormatException)
+            {
+                throw new FormatException("Cannot convert '" + token + "' to double.");
+            }
         }
 
         if (targetType == typeof(bool))
         {
-            return bool.Parse(token);
+            if (token == "true") return true;
+            if (token == "false") return false;
+            throw new FormatException("Cannot convert '" + token + "' to bool.");
         }
 
         if (targetType == typeof(Guid))
