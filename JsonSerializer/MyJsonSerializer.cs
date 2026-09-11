@@ -39,6 +39,39 @@ public class MyJsonSerializer : IJasonSerializer
         return SerializeObject(value);
     }
 
+    public T? Deserialize<T>(string json)
+    {
+        if (json == null)
+        {
+            throw new ArgumentNullException(nameof(json));
+        }
+
+        string token = json.Trim();
+        Type targetType = typeof(T);
+
+        if (token == "null")
+        {
+            return default;
+        }
+
+        if (targetType == typeof(string))
+        {
+            return (T)(object)ParseJsonString(token);
+        }
+
+        if (targetType == typeof(int))
+        {
+            return (T)(object)int.Parse(token);
+        }
+
+        if (targetType == typeof(bool))
+        {
+            return (T)(object)bool.Parse(token);
+        }
+
+        throw new NotImplementedException("Deserialization for " + targetType.Name + " is not implemented yet.");
+    }
+
     private static bool IsNumericType(Type type)
     {
         return type == typeof(int) || type == typeof(long)
@@ -108,6 +141,68 @@ public class MyJsonSerializer : IJasonSerializer
             }
         }
         return sb.ToString();
+    }
+
+    private static string ParseJsonString(string token)
+    {
+        if (token.Length < 2 || token[0] != '"' || token[token.Length - 1] != '"')
+        {
+            throw new FormatException("A JSON string must start and end with a quote.");
+        }
+
+        string content = token.Substring(1, token.Length - 2);
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < content.Length; i++)
+        {
+            char c = content[i];
+
+            if (c == '\\')
+            {
+                i++;
+                if (i >= content.Length)
+                {
+                    throw new FormatException("Invalid escape sequence at the end of a JSON string.");
+                }
+
+                char escaped = content[i];
+                switch (escaped)
+                {
+                    case '"':
+                        result.Append('"');
+                        break;
+                    case '\\':
+                        result.Append('\\');
+                        break;
+                    case '/':
+                        result.Append('/');
+                        break;
+                    case 'b':
+                        result.Append('\b');
+                        break;
+                    case 'f':
+                        result.Append('\f');
+                        break;
+                    case 'n':
+                        result.Append('\n');
+                        break;
+                    case 'r':
+                        result.Append('\r');
+                        break;
+                    case 't':
+                        result.Append('\t');
+                        break;
+                    default:
+                        throw new FormatException("Unsupported JSON escape sequence: \\" + escaped);
+                }
+            }
+            else
+            {
+                result.Append(c);
+            }
+        }
+
+        return result.ToString();
     }
 
     private string SerializeArray(object value)

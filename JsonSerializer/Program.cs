@@ -1,4 +1,4 @@
-﻿using JsonSerializer;
+using JsonSerializer;
 
 
 var serializer = new MyJsonSerializer();
@@ -27,6 +27,11 @@ Console.WriteLine(jsonPerson);
 
 IEnumerable<int> numbers = new HashSet<int> { 1, 2, 3 };
 Console.WriteLine(serializer.Serialize(numbers));
+
+string? parsedName = serializer.Deserialize<string>("\"Ada Lovelace\"");
+int parsedAge = serializer.Deserialize<int>("36");
+bool parsedActive = serializer.Deserialize<bool>("true");
+Console.WriteLine(parsedName + ", " + parsedAge + ", " + parsedActive);
 
 class Person
 {
