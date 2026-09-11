@@ -117,7 +117,48 @@ public class MyJsonSerializer : IJasonSerializer
             return DeserializeObject(token, targetType);
         }
 
+        if (token.StartsWith("[") && token.EndsWith("]"))
+        {
+            return DeserializeArray(token, targetType);
+        }
+
         throw new NotImplementedException("Deserialization for " + targetType.Name + " is not implemented yet.");
+    }
+
+    private object DeserializeArray(string token, Type targetType)
+    {
+        string inner = token.Substring(1, token.Length - 2).Trim();
+        List<string> items = inner.Length == 0 ? new List<string>() : SplitJsonElements(inner);
+
+        if (targetType.IsArray)
+        {
+            Type elementType = targetType.GetElementType()!;
+            Array array = Array.CreateInstance(elementType, items.Count);
+            for (int i = 0; i < items.Count; i++)
+            {
+                object? itemValue = Deserialize(items[i].Trim(), elementType);
+                array.SetValue(itemValue, i);
+            }
+            return array;
+        }
+
+        Type? genericTypeDef = targetType.IsGenericType ? targetType.GetGenericTypeDefinition() : null;
+        if (genericTypeDef == typeof(List<>) || genericTypeDef == typeof(IEnumerable<>) || genericTypeDef == typeof(ICollection<>) || genericTypeDef == typeof(IList<>))
+        {
+            Type elementType = targetType.GetGenericArguments()[0];
+            Type listType = typeof(List<>).MakeGenericType(elementType);
+            IList list = (IList)Activator.CreateInstance(listType)!;
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                object? itemValue = Deserialize(items[i].Trim(), elementType);
+                list.Add(itemValue);
+            }
+
+            return list;
+        }
+
+        throw new NotImplementedException("Collection type " + targetType.Name + " is not supported for deserialization.");
     }
 
     private object DeserializeObject(string token, Type targetType)
