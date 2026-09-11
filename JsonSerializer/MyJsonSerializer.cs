@@ -41,32 +41,66 @@ public class MyJsonSerializer : IJasonSerializer
 
     public T? Deserialize<T>(string json)
     {
+        object? result = Deserialize(json, typeof(T));
+        if (result == null)
+        {
+            return default;
+        }
+        return (T)result;
+    }
+
+    public object? Deserialize(string json, Type targetType)
+    {
         if (json == null)
         {
             throw new ArgumentNullException(nameof(json));
         }
 
         string token = json.Trim();
-        Type targetType = typeof(T);
 
         if (token == "null")
         {
-            return default;
+            return null;
         }
 
         if (targetType == typeof(string))
         {
-            return (T)(object)ParseJsonString(token);
+            return ParseJsonString(token);
         }
 
         if (targetType == typeof(int))
         {
-            return (T)(object)int.Parse(token);
+            return int.Parse(token);
+        }
+
+        if (targetType == typeof(long))
+        {
+            return long.Parse(token);
+        }
+
+        if (targetType == typeof(double))
+        {
+            return double.Parse(token);
         }
 
         if (targetType == typeof(bool))
         {
-            return (T)(object)bool.Parse(token);
+            return bool.Parse(token);
+        }
+
+        if (targetType == typeof(Guid))
+        {
+            return Guid.Parse(token.Trim('"'));
+        }
+
+        if (targetType == typeof(DateTime))
+        {
+            return DateTime.Parse(token.Trim('"'));
+        }
+
+        if (targetType.IsEnum)
+        {
+            return Enum.Parse(targetType, token.Trim('"'));
         }
 
         throw new NotImplementedException("Deserialization for " + targetType.Name + " is not implemented yet.");
